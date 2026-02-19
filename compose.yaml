@@ -1,0 +1,172 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: transport_ocr_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-transport_ocr}
+      POSTGRES_USER: ${POSTGRES_USER:-ocr_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ocr_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO Storage
+  minio:
+    image: minio/minio:latest
+    container_name: transport_ocr_minio
+    command: minio server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # Redis (Message Broker for Celery)
+  redis:
+    image: redis:7-alpine
+    container_name: transport_ocr_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Django Web Application
+  web-app:
+    build:
+      context: ../services/web-app
+      dockerfile: Dockerfile
+    container_name: transport_ocr_web
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - OCR_SERVICE_URL=http://ocr-service:8001
+      - OCR_SERVICE_API_KEY=${OCR_SERVICE_API_KEY}
+      - MINIO_STORAGE_ENDPOINT=minio:9000
+      - MINIO_STORAGE_ACCESS_KEY=${MINIO_ROOT_USER}
+      - MINIO_STORAGE_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    volumes:
+      - ../services/web-app:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: unless-stopped
+
+  # OCR Microservice
+  ocr-service:
+    build:
+      context: ../services/ocr-service
+      dockerfile: Dockerfile
+    container_name: transport_ocr_ocr
+    environment:
+      - API_KEY=${OCR_SERVICE_API_KEY}
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+      - MINIO_BUCKET=documents
+      - REDIS_HOST=redis
+      - DEVICE=cpu  # Change to 'cuda' if using GPU
+      - USE_GPU=False
+    volumes:
+      - ../services/ocr-service:/app
+    ports:
+      - "8001:8001"  # API
+      - "8002:8002"  # Metrics
+    depends_on:
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: unless-stopped
+
+  # Celery Worker for OCR Service
+  ocr-worker:
+    build:
+      context: ../services/ocr-service
+      dockerfile: Dockerfile
+    container_name: transport_ocr_worker
+    command: celery -A src.workers.celery_app worker --loglevel=info --concurrency=2
+    environment:
+      - API_KEY=${OCR_SERVICE_API_KEY}
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+      - REDIS_HOST=redis
+      - DEVICE=cuda  # Use GPU for workers
+      - USE_GPU=True
+    volumes:
+      - ../services/ocr-service:/app
+    depends_on:
+      ocr-service:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: transport_ocr_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - web-app
+      - ocr-service
+    networks:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  minio_data:
+
+networks:
+  backend:
+    driver: bridge
