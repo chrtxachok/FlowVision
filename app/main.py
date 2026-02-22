@@ -6,8 +6,8 @@ from typing import Optional
 import logging
 from app.config import settings
 from app.services.ocr_service import OCRService
-from app.models.request import OCRRequest
-from app.models.response import OCRResponse, ErrorResponse
+from app.base_models.request import OCRRequest
+from app.base_models.response import OCRResponse, ErrorResponse
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)

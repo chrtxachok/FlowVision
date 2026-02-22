@@ -1,29 +1,29 @@
 # FastAPI и веб-фреймворк
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-pydantic==2.5.3
-pydantic-settings==2.1.0
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
 
 # OCR и обработка изображений
-paddleocr==2.7.0.3
-paddlepaddle==2.5.2
-opencv-python==4.8.1.78
-Pillow==10.1.0
-numpy==1.26.3
+paddleocr
+paddlepaddle
+opencv-python
+pillow
+numpy
 
 # Обработка PDF
-pdf2image==1.16.3
-PyMuPDF==1.23.8
+pdf2image
+PyMuPDF
 
 # Валидация и утилиты
-python-multipart==0.0.6
+python-multipart
 
 # Логирование
-loguru==0.7.2
+loguru
 
 # dev:
-#pytest==7.4.3
-#pytest-asyncio==0.21.1
+pytest
+pytest-asyncio
 #httpx==0.26.0
 #black==23.12.1
 #flake8==7.0.0
