@@ -11,7 +11,7 @@ from .schemas import (
 )
 from .dependencies import verify_api_key, get_settings
 from storage.minio_client import MinioClient
-from workers.tasks import process_document_task
+from src.workers.table_extractor import process_document_task
 from monitoring.metrics import increment_requests_counter, record_processing_time
 
 logger = logging.getLogger(__name__)

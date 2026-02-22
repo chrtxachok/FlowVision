@@ -1,95 +1,103 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, File, UploadFile, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
+from typing import Optional
 import logging
+from app.config import settings
+from app.services.ocr_service import OCRService
+from app.models.request import OCRRequest
+from app.models.response import OCRResponse, ErrorResponse
 
-from api.routes import router as api_router
-from api.dependencies import get_settings
-from monitoring.metrics import setup_metrics
-from monitoring.logging import setup_logging
-
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
+# Жизненный цикл приложения
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifecycle events for FastAPI application"""
-    # Startup
-    logger.info("Starting OCR Service...")
-    setup_logging()
-    setup_metrics(app)
-    
-    # Load ML models
-    from ocr.pipeline import LayoutLMPipeline
-    app.state.pipeline = LayoutLMPipeline(
-        model_path=app.state.settings.LAYOUTLM_MODEL_PATH,
-        device=app.state.settings.DEVICE
-    )
-    app.state.pipeline.load_models()
-    
-    logger.info("OCR Service started successfully")
-    
+    """Инициализация сервиса при запуске"""
+    # Загрузка моделей
+    logger.info("Loading OCR models...")
+    ocr_service = OCRService()
+    app.state.ocr_service = ocr_service
+    logger.info("OCR service initialized")
     yield
-    
-    # Shutdown
-    logger.info("Shutting down OCR Service...")
+    # Очистка при завершении
+    logger.info("Shutting down OCR service")
 
+app = FastAPI(
+    title="FlowLogix OCR Service",
+    description="Микросервис для распознавания накладных и документов",
+    version="1.0.0",
+    lifespan=lifespan
+)
 
-def create_app() -> FastAPI:
-    """Create and configure FastAPI application"""
-    
-    app = FastAPI(
-        title="Transport Documents OCR Service",
-        description="Microservice for OCR processing of transport waybills",
-        version="1.0.0",
-        lifespan=lifespan
-    )
-    
-    # CORS middleware
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-    
-    # Include API routes
-    app.include_router(api_router, prefix="/api/v1")
-    
-    # Health check endpoint
-    @app.get("/health")
-    async def health_check():
-        return {
-            "status": "healthy",
-            "service": "ocr-service",
-            "models_loaded": hasattr(app.state, 'pipeline') and app.state.pipeline.is_loaded
-        }
-    
-    # Error handlers
-    @app.exception_handler(Exception)
-    async def global_exception_handler(request, exc):
-        logger.error(f"Unhandled exception: {exc}", exc_info=True)
+# CORS настройки
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["POST", "GET"],
+    allow_headers=["*"],
+)
+
+# Health check
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "ocr"}
+
+# Основной эндпоинт обработки
+@app.post("/api/v1/ocr/process", response_model=OCRResponse)
+async def process_document(
+    file: UploadFile = File(...),
+    document_type: str = "waybill",
+    api_key: Optional[str] = None
+):
+    """Обработка документа через OCR"""
+    try:
+        # Валидация ключа
+        if api_key != settings.API_KEY:
+            raise HTTPException(status_code=401, detail="Invalid API key")
+        
+        # Валидация файла
+        if not file.content_type in ["image/jpeg", "image/png", "application/pdf"]:
+            raise HTTPException(status_code=400, detail="Unsupported file type")
+        
+        if file.size > settings.MAX_FILE_SIZE:
+            raise HTTPException(status_code=400, detail="File too large")
+        
+        # Чтение файла
+        file_bytes = await file.read()
+        
+        # Обработка
+        ocr_service: OCRService = app.state.ocr_service
+        result = await ocr_service.process_document(
+            file_bytes=file_bytes,
+            file_type=file.content_type,
+            document_type=document_type
+        )
+        
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"OCR processing error: {e}")
         return JSONResponse(
             status_code=500,
-            content={"detail": "Internal server error", "error": str(exc)}
+            content=ErrorResponse(
+                error="ocr_processing_failed",
+                message=str(e)
+            ).dict()
         )
-    
-    return app
 
-
-app = create_app()
-
-if __name__ == "__main__":
-    import uvicorn
-    from api.dependencies import get_settings
-    
-    settings = get_settings()
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=settings.PORT,
-        reload=settings.DEBUG,
-        workers=settings.WORKERS
-    )
+# Информация о сервисе
+@app.get("/api/v1/ocr/info")
+async def get_service_info():
+    return {
+        "supported_types": ["waybill", "invoice", "act", "upd"],
+        "supported_formats": ["image/jpeg", "image/png", "application/pdf"],
+        "max_file_size_mb": settings.MAX_FILE_SIZE / (1024 * 1024),
+        "version": "1.0.0"
+    }
