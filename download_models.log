@@ -74,3 +74,57 @@
 2026-02-23 00:50:40,377 - INFO - CLS        : ✓ УСПЕШНО
 2026-02-23 00:50:40,378 - ERROR - 
 ❌ Некоторые модели не были загружены. Проверьте логи.
+2026-02-24 20:48:19,722 - INFO - ============================================================
+2026-02-24 20:48:19,722 - INFO - Начало загрузки моделей PaddleOCR для русского языка
+2026-02-24 20:48:19,723 - INFO - ============================================================
+2026-02-24 20:48:19,723 - INFO - 
+--- Загрузка модели: DET ---
+2026-02-24 20:48:21,293 - ERROR - Ошибка при загрузке (попытка 1): 404 Client Error: Not Found for url: https://paddleocr.bj.bcebos.com/PP-OCRv4/english/en_PP-OCRv4_det_infer.tar
+2026-02-24 20:48:27,586 - ERROR - Ошибка при загрузке (попытка 2): 404 Client Error: Not Found for url: https://paddleocr.bj.bcebos.com/PP-OCRv4/english/en_PP-OCRv4_det_infer.tar
+2026-02-24 20:48:34,017 - ERROR - Ошибка при загрузке (попытка 3): 404 Client Error: Not Found for url: https://paddleocr.bj.bcebos.com/PP-OCRv4/english/en_PP-OCRv4_det_infer.tar
+2026-02-24 20:48:39,018 - ERROR - ✗ Не удалось загрузить модель det
+2026-02-24 20:48:39,019 - INFO - 
+--- Загрузка модели: REC ---
+2026-02-24 20:48:40,312 - ERROR - Ошибка при загрузке (попытка 1): 404 Client Error: Not Found for url: https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/Multilingual_PP-OCRv4_rec_infer.tar
+2026-02-24 20:48:46,558 - ERROR - Ошибка при загрузке (попытка 2): 404 Client Error: Not Found for url: https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/Multilingual_PP-OCRv4_rec_infer.tar
+2026-02-24 20:48:53,053 - ERROR - Ошибка при загрузке (попытка 3): 404 Client Error: Not Found for url: https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/Multilingual_PP-OCRv4_rec_infer.tar
+2026-02-24 20:48:58,054 - ERROR - ✗ Не удалось загрузить модель rec
+2026-02-24 20:48:58,056 - INFO - 
+--- Загрузка модели: CLS ---
+2026-02-24 20:48:58,058 - INFO - ✓ Модель cls уже установлена — пропускаем
+2026-02-24 20:48:58,058 - INFO - 
+============================================================
+2026-02-24 20:48:58,059 - INFO - Итог загрузки моделей:
+2026-02-24 20:48:58,059 - INFO - ============================================================
+2026-02-24 20:48:58,061 - INFO - DET        : ✗ ОШИБКА
+2026-02-24 20:48:58,066 - INFO - REC        : ✗ ОШИБКА
+2026-02-24 20:48:58,067 - INFO - CLS        : ✓ УСПЕШНО
+2026-02-24 20:48:58,067 - ERROR - 
+❌ Некоторые модели не были загружены. Проверьте логи.
+2026-02-25 00:07:36,012 - INFO - ============================================================
+2026-02-25 00:07:36,012 - INFO - Начало загрузки моделей PaddleOCR для русского языка
+2026-02-25 00:07:36,012 - INFO - ============================================================
+2026-02-25 00:07:36,013 - INFO - 
+--- Загрузка модели: DET ---
+2026-02-25 00:07:37,233 - ERROR - Ошибка при загрузке (попытка 1): 404 Client Error: Not Found for url: https://paddleocr.bj.bcebos.com/PP-OCRv4/english/en_PP-OCRv4_det_infer.tar
+2026-02-25 00:07:43,613 - ERROR - Ошибка при загрузке (попытка 2): 404 Client Error: Not Found for url: https://paddleocr.bj.bcebos.com/PP-OCRv4/english/en_PP-OCRv4_det_infer.tar
+2026-02-25 00:07:49,978 - ERROR - Ошибка при загрузке (попытка 3): 404 Client Error: Not Found for url: https://paddleocr.bj.bcebos.com/PP-OCRv4/english/en_PP-OCRv4_det_infer.tar
+2026-02-25 00:07:54,980 - ERROR - ✗ Не удалось загрузить модель det
+2026-02-25 00:07:54,981 - INFO - 
+--- Загрузка модели: REC ---
+2026-02-25 00:07:56,404 - ERROR - Ошибка при загрузке (попытка 1): 404 Client Error: Not Found for url: https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/Multilingual_PP-OCRv4_rec_infer.tar
+2026-02-25 00:08:02,765 - ERROR - Ошибка при загрузке (попытка 2): 404 Client Error: Not Found for url: https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/Multilingual_PP-OCRv4_rec_infer.tar
+2026-02-25 00:08:08,995 - ERROR - Ошибка при загрузке (попытка 3): 404 Client Error: Not Found for url: https://paddleocr.bj.bcebos.com/PP-OCRv4/multilingual/Multilingual_PP-OCRv4_rec_infer.tar
+2026-02-25 00:08:13,996 - ERROR - ✗ Не удалось загрузить модель rec
+2026-02-25 00:08:13,997 - INFO - 
+--- Загрузка модели: CLS ---
+2026-02-25 00:08:13,998 - INFO - ✓ Модель cls уже установлена — пропускаем
+2026-02-25 00:08:13,998 - INFO - 
+============================================================
+2026-02-25 00:08:13,999 - INFO - Итог загрузки моделей:
+2026-02-25 00:08:13,999 - INFO - ============================================================
+2026-02-25 00:08:13,999 - INFO - DET        : ✗ ОШИБКА
+2026-02-25 00:08:13,999 - INFO - REC        : ✗ ОШИБКА
+2026-02-25 00:08:14,000 - INFO - CLS        : ✓ УСПЕШНО
+2026-02-25 00:08:14,000 - ERROR - 
+❌ Некоторые модели не были загружены. Проверьте логи.

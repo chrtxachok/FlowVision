@@ -5,6 +5,7 @@ pydantic
 pydantic-settings
 
 # OCR и обработка изображений
+easyocr
 paddleocr
 paddlepaddle
 opencv-python
