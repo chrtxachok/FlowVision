@@ -9,6 +9,11 @@
   - `run(image: np.ndarray)` возвращает raw-результат backend'а
   - `app.ocr.postprocess.parse_ocr_result()` приводит raw-результат к общему формату:
       {"full_text": str, "lines": [...], "blocks": [...]}
+
+Ключевые моменты форматов изображений:
+  - Внутри сервиса мы используем OpenCV-формат BGR (`np.ndarray`).
+  - EasyOCR принимает RGB, поэтому перед `readtext()` делается конвертация BGR→RGB.
+  - PaddleOCR v3 корректно работает с массивами BGR/RGB, но исторически в проекте используется BGR.
 """
 import logging
 from pathlib import Path
@@ -29,6 +34,16 @@ def _model_dir_valid(path: Path) -> bool:
 class OCRPipeline:
     """
     Обёртка над OCR backend'ом (easyocr/paddleocr).
+
+    Зачем нужен класс:
+      - инкапсулирует инициализацию конкретного движка OCR;
+      - предоставляет единый метод `run()` для получения raw-результата;
+      - поддерживает fallback: если выбран `easyocr`, но пакет не установлен,
+        пайплайн автоматически переключится на `paddleocr`.
+
+    Что НЕ делает:
+      - не нормализует результаты в общий формат (это задача `postprocess.parse_ocr_result`);
+      - не занимается предметной логикой документов (это задача процессоров в `app/processors`).
     """
 
     def __init__(

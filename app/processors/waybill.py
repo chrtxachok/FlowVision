@@ -1,10 +1,27 @@
 from typing import Dict, Any, List
 from app.processors.base import BaseProcessor
 import re
+import logging
 
+logger = logging.getLogger(__name__)
 
 class WaybillProcessor(BaseProcessor):
-    """Обработчик накладных (ТТН, накладные)."""
+    """
+    Обработчик накладных (ТТН / товарных накладных).
+
+    Вход:
+      - `ocr_result`: нормализованный словарь из `app.ocr.postprocess.parse_ocr_result()`
+        с ключами `full_text` и `lines`.
+
+    Выход:
+      - dict с `extracted_data`, где каждое поле имеет форму:
+        {"value": Optional[str], "confidence": float, "raw_text": Optional[str], ...}
+
+    Общая идея:
+      - сейчас извлечение сделано регулярками по `full_text` (lowercase),
+        т.к. накладные часто имеют предсказуемые маркеры ("итого", "отправитель", "получатель").
+      - `lines` оставлены для будущего улучшения (поиск рядом с bbox/ключевыми словами).
+    """
 
     def process(self, ocr_result: Dict[str, Any], image_type: str) -> Dict[str, Any]:
         """Основной метод обработки накладной."""
@@ -51,15 +68,18 @@ class WaybillProcessor(BaseProcessor):
         }
 
     def _extract_waybill_number(self, text: str, lines: List) -> Dict:
+        logger.debug(f"Поиск номера накладной в тексте: {text[:100]}...")
         patterns = [
             r'накладная\s*№?\s*([а-я0-9/-]+)',
             r'ттн\s*№?\s*([а-я0-9/-]+)',
             r'№\s*([а-я0-9/-]+)\s*(?:от|дата)',
         ]
-        for pattern in patterns:
+        for i, pattern in enumerate(patterns):
             match = re.search(pattern, text)
             if match:
+                logger.info(f"Паттерн #{i} сработал: {pattern}")
                 return {"value": match.group(1).strip(), "confidence": 0.9, "raw_text": match.group(0)}
+        logger.warning("Номер накладной не найден")
         return {"value": None, "confidence": 0.0}
 
     def _extract_date(self, text: str, lines: List) -> Dict:

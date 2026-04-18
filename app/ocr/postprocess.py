@@ -42,6 +42,11 @@ def parse_ocr_result(raw_results: List[Any]) -> Dict[str, Any]:
             "lines": [{"text": str, "confidence": float, "bbox": [x1,y1,x2,y2]}, ...],
             "blocks": [str, ...]
         }
+
+    Рationale (почему вообще нужна нормализация):
+      - разные OCR движки возвращают разные структуры данных;
+      - процессоры документов (`app/processors/*`) хотят работать с единым форматом;
+      - этот модуль — единственная точка, где мы “знаем” про детали paddleocr/easyocr.
     """
     lines: List[Dict] = []
 

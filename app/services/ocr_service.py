@@ -1,6 +1,12 @@
 """
 OCR-сервис — обёртка над OCRPipeline и процессорами документов.
 Инициализируется один раз при старте FastAPI (lifespan).
+
+Высокоуровневый поток данных (sync-часть, выполняется в thread pool):
+  bytes (файл) -> `bytes_to_numpy()` -> `enhance_image()` -> `OCRPipeline.run()` -> `parse_ocr_result()`
+
+Дальше результат OCR передаётся в процессор конкретного документа (например, `WaybillProcessor`),
+который возвращает структурированные поля и агрегированную уверенность.
 """
 import asyncio
 import logging
@@ -27,6 +33,14 @@ class OCRService:
 
     В эндпоинте:
         result = await service.process_document(file_bytes, file_type, doc_type)
+
+    Контракты и форматы
+    -------------------
+    - file_type: MIME-тип исходного файла: "image/jpeg", "image/png", "application/pdf"
+    - OCRPipeline.run(): возвращает raw-результат backend'а (easyocr/paddleocr)
+    - parse_ocr_result(): приводит raw-результат к общему словарю:
+        {"full_text": str, "lines": [{"text","confidence","bbox"}], "blocks": [str,...]}
+    - processor.process(): извлекает поля предметной области и возвращает dict
     """
 
     def __init__(self):
@@ -74,6 +88,11 @@ class OCRService:
         Returns
         -------
         OCRResponse — pydantic-модель с полными данными.
+
+        Порядок работы:
+          1) OCR выполняется синхронно (CPU-bound) в thread pool, чтобы не блокировать event loop.
+          2) По `document_type` выбирается процессор (если есть).
+          3) Собирается `OCRResponse` с метаданными и сырой строкой `raw_text`.
         """
         start_ms = time.time()
 
@@ -120,7 +139,14 @@ class OCRService:
     # ------------------------------------------------------------------
 
     def _run_ocr(self, file_bytes: bytes, file_type: str) -> Dict[str, Any]:
-        """Конвертирует файл → numpy → OCR → словарь."""
+        """
+        Синхронная часть OCR (запускается в thread pool).
+
+        Делает:
+        - декодирование файла в numpy (BGR) + базовую предобработку;
+        - вызов OCR backend'а;
+        - нормализацию результата до общего формата (см. `parse_ocr_result`).
+        """
         img = bytes_to_numpy(file_bytes, file_type)
         img = enhance_image(img)
         raw = self._pipeline.run(img)

@@ -21,38 +21,79 @@
 
 ## 🛠️ Установка
 
-# Установка зависимостей:
-bash
+### Установка зависимостей
+
+```bash
 pip install -r requirements.txt
+```
 
-# Загрузка моделей:
-bash
+### Модели
+
+- **EasyOCR (рекомендуется)**: модели скачиваются автоматически при первом запуске.
+- **PaddleOCR (legacy)**: при `OCR_BACKEND=paddleocr` можно заранее скачать модели:
+
+```bash
 python scripts/download_models.py
+```
 
-# Настройка переменных окружения:
-bash
-cp .env.example .env
-#Отредактировать .env
+### Настройка переменных окружения
 
-# Запуск:
-bash
+```bash
+copy .env.example .env
+```
+
+Дальше отредактируйте `.env` при необходимости.
+
+### Тестирование (локальный smoke-test)
+
+```bash
+python scripts/test_ocr.py --path static/image.jpg --doc-type waybill
+```
+
+### Запуск API
+
+```bash
 uvicorn app.main:app --reload
+```
 
-# 🐳 Docker
-bash
+## 🧠 Как работает программа (в целом)
+
+Ниже описан основной синхронный “путь данных”, который используется и в `scripts/test_ocr.py`, и в API эндпоинте `app.main`.
+
+1. **Вход**: байты файла + MIME-тип (`image/jpeg`, `image/png`, `application/pdf`) + `document_type` (например, `waybill`).
+2. **Preprocess** (`app/ocr/preprocess.py`):
+   - JPEG/PNG: декодирование через PIL → numpy → BGR (OpenCV-формат)
+   - PDF: рендер первой страницы (PyMuPDF) → BGR
+   - Улучшение изображения (`enhance_image`) для OCR
+3. **OCR backend** (`app/ocr/pipeline.py`):
+   - `easyocr` (по умолчанию): `Reader.readtext()` на RGB-изображении
+   - `paddleocr` (legacy): `PaddleOCR.predict()` на BGR-изображении
+4. **Postprocess** (`app/ocr/postprocess.py`):
+   - Приведение raw-результата backend'а к единому формату:
+     `{"full_text": str, "lines": [{"text","confidence","bbox"}], "blocks": [...] }`
+5. **Processor** (`app/processors/*.py`):
+   - Логика конкретного типа документа (например, `WaybillProcessor`) извлекает структурированные поля регулярками/эвристиками.
+6. **Выход**: `OCRResponse` (`app/base_models/response.py`) со статусом, уверенностью, временем обработки и `extracted_data`.
+
+## 🐳 Docker
+
+```bash
 docker-compose up -d
+```
 
 # 📡 API
 Health Check
-bash
+
+```bash
 GET /health
+```
 
 Обработка документа
-bash
-POST /api/v1/ocr/process
-Headers:
-  X-API-Key: your-api-key
 
-Form Data:
-  file: (изображение или PDF)
-  document_type: waybill|invoice|act|upd
+```bash
+POST /api/v1/ocr/process
+```
+
+Форма:
+- `file`: изображение или PDF
+- `document_type`: `waybill|invoice|act|upd`

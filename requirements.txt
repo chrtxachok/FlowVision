@@ -3,18 +3,24 @@ fastapi
 uvicorn[standard]
 pydantic
 pydantic-settings
+pandas
 
 # OCR и обработка изображений
 easyocr
-paddleocr
-paddlepaddle
 opencv-python
 pillow
 numpy
+transformers
+datasets
+accelerate
+evaluate
+seqeval
+torch
+torchvision
 
 # Обработка PDF
-pdf2image
-PyMuPDF
+#pdf2image
+#PyMuPDF
 
 # Валидация и утилиты
 python-multipart
@@ -26,6 +32,6 @@ loguru
 pytest
 pytest-asyncio
 #httpx==0.26.0
-#black==23.12.1
-#flake8==7.0.0
+black==23.12.1
+flake8==7.0.0
 #mypy==1.8.0
