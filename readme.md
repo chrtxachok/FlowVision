@@ -22,18 +22,24 @@
 ## 🛠️ Установка
 
 ### Установка зависимостей
+может понадобиться подключиться к зеркалу
+```bash
+export HF_ENDPOINT=https://hf-mirror.com
+```
 
 ```bash
 pip install -r requirements.txt
 ```
+зеркало для установки оставшихся зависимостей
+```bash
+pip install --default-timeout=1000 sentencepiece albumentations pytorch-lightning fastapi uvicorn python-multipart -i https://pypi.tuna.tsinghua.edu.cn/simple
+```
 
 ### Модели
 
-- **EasyOCR (рекомендуется)**: модели скачиваются автоматически при первом запуске.
-- **PaddleOCR (legacy)**: при `OCR_BACKEND=paddleocr` можно заранее скачать модели:
-
+donut-base
 ```bash
-python scripts/download_models.py
+python scripts/download_model.py
 ```
 
 ### Настройка переменных окружения
@@ -41,8 +47,13 @@ python scripts/download_models.py
 ```bash
 copy .env.example .env
 ```
-
 Дальше отредактируйте `.env` при необходимости.
+
+### подготовка данных
+для обучения данные переводятся к .jsonl
+```bash
+python scripts/prepare_data.py
+```
 
 ### Тестирование (локальный smoke-test)
 

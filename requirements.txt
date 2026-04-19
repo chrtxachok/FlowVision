@@ -3,20 +3,26 @@ fastapi
 uvicorn[standard]
 pydantic
 pydantic-settings
-pandas
+python-multipart
+python-dotenv
 
 # OCR и обработка изображений
-easyocr
+torch
+torchvision
+pytorch-lightning
 opencv-python
 pillow
 numpy
+albumenations
 transformers
 datasets
+seqeval
+sentencepiece
+parse
+
+# Метрики и обучение
 accelerate
 evaluate
-seqeval
-torch
-torchvision
 
 # Обработка PDF
 #pdf2image
