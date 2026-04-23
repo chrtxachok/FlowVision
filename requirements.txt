@@ -13,12 +13,13 @@ pytorch-lightning
 opencv-python
 pillow
 numpy
-albumenations
+albumentations
 transformers
 datasets
 seqeval
 sentencepiece
 parse
+timm
 
 # Метрики и обучение
 accelerate
