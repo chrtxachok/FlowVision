@@ -1,0 +1,42 @@
+Этап 1
+
+Участник №1: ML Engineer (Архитектор модели)
+Задача: Настройка «словаря» нейросети и создание каркаса обучения.
+Создание списка токенов:
+Выпишите все уникальные ключи из вашего файла train.json (поле rectanglelabels).
+Должно получиться: waybill_number, document_date, sender_name, recipient_name, product_name, carrier_name, sender_inn, recipient_inn, sender_kpp, recipient_kpp, contract_number, invoice_number, carrier_inn, driver_name, vehicle_number, total_amount, arrival_time, departure_time, loading_address, unloading_address.
+Превратите их в формат Donut: <s_waybill_number>, </s_waybill_number> и т.д.
+Написание src/model_module.py:
+Создайте класс DonutModelPLModule на базе pytorch_lightning.
+Реализуйте метод __init__, который принимает базовую модель и расширяет её словарь новыми токенами.
+Реализуйте training_step (расчет Loss).
+Настройка гиперпараметров:
+Подготовьте файл src/config.py. Установите max_epochs=100 (для 21 примера нужно много эпох), lr=2e-5, warmup_steps=50.
+
+Участник №2: Backend / DevOps (Инфраструктура)
+Задача: Обеспечение автономной работы в РФ и подготовка Docker-среды.
+Локализация модели:
+Запустите скрипт download_model.py (через зеркало hf-mirror.com).
+Проверьте, что в папке models/donut-base лежат: config.json, pytorch_model.bin (или model.safetensors), tokenizer.json и preprocessor_config.json.
+Важно: С этого момента в коде других участников пути должны вести только в эту папку.
+Настройка Docker:
+Создайте Dockerfile. Используйте базовый образ с CUDA, например nvidia/cuda:11.8.0-base-ubuntu22.04.
+Убедитесь, что Python 3.11 устанавливается внутри контейнера.
+Пропишите установку библиотек через китайское или яндексовское зеркало прямо в Dockerfile.
+Структура и переменные:
+Создайте файл .env, где укажите LOCAL_MODEL_PATH="./models/donut-base".
+Создайте все пустые папки согласно структуре проекта (data/raw, data/dataset/train, и т.д.).
+
+Участник №3: Fullstack / QA (Инженер данных)
+Задача: Превращение разметки в «учебник» для модели и контроль качества.
+Написание конвертера scripts/prepare_data.py:
+Реализуйте логику, которую мы обсуждали ранее: извлечение текста из field_text и связывание его с rectanglelabels.
+Очистка данных: В коде конвертации добавьте strip() для всех строк и удаление лишних переносов строк \n, чтобы JSON в metadata.jsonl был компактным.
+Валидация имен файлов:
+Label Studio при экспорте часто меняет имена (добавляет хеши типа 0263f71e-).
+Вам нужно либо переименовать файлы в папке data/images, либо убедиться, что в metadata.jsonl записаны именно те имена, которые реально лежат на диске.
+Разделение датасета (Train/Test Split):
+Из ваших 21 изображения:
+17 штук — в папку data/dataset/train/ + соответствующие строки в metadata.jsonl.
+4 штуки — в папку data/dataset/test/ + соответствующие строки в metadata.jsonl.
+Проверьте, чтобы в test попали накладные разного типа (и page-1, и page-2).
