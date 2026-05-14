@@ -49,6 +49,16 @@ copy .env.example .env
 ```
 Дальше отредактируйте `.env` при необходимости.
 
+загрузка конфигурации
+```powershell
+scripts\load_env.ps1
+```
+
+проверка python конфигурации
+```powershell
+python -c "from configs.config import BASE_DIR, API_PORT, LOG_LEVEL; print(f'BASE_DIR: {BASE_DIR}'); print(f'API_PORT: {API_PORT}'); print(f'LOG_LEVEL: {LOG_LEVEL}')"
+```
+
 ### подготовка данных
 для обучения данные переводятся к .jsonl
 ```bash

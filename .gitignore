@@ -11,6 +11,8 @@ __pycache__
 htmlcov
 dist
 site
+lib/
+lib64/
 .coverage*
 coverage.xml
 .netlify
@@ -24,3 +26,49 @@ site_build
 venv
 docs.zip
 archive.zip
+MANIFEST
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# Исходные данные
+dataset/raw/
+dataset/annotated/
+data/train/
+
+# Обученные модели
+models/
+*.pth
+*.pt
+*.bin
+*.onnx
+*.safetensors
+
+# логи и кэш
+logs/
+*.log
+cache/
+.cache/
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Docker образы (не коммитить)
+*.tar
+*.tar.gz
+
+# Docker кэш
+.docker/
+
+# Оставляем для сборки:
+!Dockerfile
+!docker-compose.yml
+!.dockerignore

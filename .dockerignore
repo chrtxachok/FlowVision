@@ -11,7 +11,7 @@ __pycache__
 .venv
 venv
 .env
-data/
+dataset/
 tests/
 docs/
 *.md
