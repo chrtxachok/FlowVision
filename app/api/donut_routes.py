@@ -119,15 +119,32 @@ async def extract_with_donut(
             settings.DONUT_TASK_PROMPTS.get("invoice", "<s_invoice>")
         )
         
-        # Извлечение данных
+        # Извлечение данных с таймаутом
         logger.info(f"Запускаю Donut для документа типа '{document_type}'...")
-        result = extractor.extract(
-            image=image_array,
-            task_prompt=task_prompt,
-            max_length=settings.DONUT_MAX_LENGTH,
-            num_beams=settings.DONUT_NUM_BEAMS,
-            temperature=settings.DONUT_TEMPERATURE,
-        )
+        
+        import asyncio
+        try:
+            # Запускаем в thread pool чтобы не блокировать event loop
+            loop = asyncio.get_event_loop()
+            result = await asyncio.wait_for(
+                loop.run_in_executor(
+                    None,
+                    lambda: extractor.extract(
+                        image=image_array,
+                        task_prompt=task_prompt,
+                        max_length=settings.DONUT_MAX_LENGTH,
+                        num_beams=settings.DONUT_NUM_BEAMS,
+                        temperature=settings.DONUT_TEMPERATURE,
+                    )
+                ),
+                timeout=120  # 120 сек таймаут
+            )
+        except asyncio.TimeoutError:
+            logger.error(f"Таймаут при обработке документа (>120 сек)")
+            raise HTTPException(
+                status_code=504,
+                detail="Processing timeout: document processing took too long (>120s)"
+            )
         
         processing_time = int((time.time() - start_time) * 1000)
         

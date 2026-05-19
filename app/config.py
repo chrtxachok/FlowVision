@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     
     # Donut model settings
     DONUT_ENABLED: bool = True
-    DONUT_MODEL_NAME: str = "naver-clova-ocr/donut-base"
+    DONUT_MODEL_NAME: str = "models/donut-base"  # ← локальный путь вместо HuggingFace
     # Для локальной модели укажите путь: "models/donut-base"
     DONUT_CACHE_DIR: Path = MODEL_DIR
     DONUT_DEVICE: str = "cpu"  # "cpu" | "cuda"
@@ -66,7 +66,7 @@ class Settings(BaseSettings):
     }
     
     # Параметры генерации для Donut
-    DONUT_MAX_LENGTH: int = 384
+    DONUT_MAX_LENGTH: int = 768  # Увеличено для полного JSON результата
     DONUT_NUM_BEAMS: int = 1
     DONUT_TEMPERATURE: float = 1.0
     

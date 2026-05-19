@@ -178,17 +178,43 @@ class DonutExtractor:
                 return_tensors="pt"
             ).pixel_values.to(self.device)
 
+            logger.info(f"Генерирую текст для документа типа '{task_prompt}'...")
+            
+            # Получаем параметры из decoder конфига (так как это VisionEncoderDecoderModel)
+            decoder_config = self.model.config.decoder
+            eos_token_id = decoder_config.eos_token_id
+            pad_token_id = decoder_config.pad_token_id
+            bos_token_id = decoder_config.bos_token_id or self.processor.tokenizer.bos_token_id or 0
+            
+            logger.debug(f"Token IDs - BOS: {bos_token_id}, EOS: {eos_token_id}, PAD: {pad_token_id}")
+            
+            import time
+            start_time = time.time()
+            
+            logger.info("Начинаю генерацию (это может занять 10-30 сек на CPU)...")
+            
+            # Создаём decoder_input_ids с BOS токеном
+            decoder_input_ids = torch.tensor([[bos_token_id]], dtype=torch.long).to(self.device)
+            
             # Генерация
             with torch.no_grad():
-                outputs = self.model.generate(
-                    pixel_values,
-                    task_prompt=task_prompt,
-                    max_length=max_length,
-                    num_beams=num_beams,
-                    temperature=temperature,
-                    early_stopping=True,
-                )
-
+                try:
+                    outputs = self.model.generate(
+                        pixel_values,
+                        decoder_input_ids=decoder_input_ids,
+                        max_length=max_length,
+                        num_beams=1,
+                        eos_token_id=eos_token_id,
+                        pad_token_id=pad_token_id,
+                        use_cache=True,
+                    )
+                except KeyboardInterrupt:
+                    logger.error("Генерация прервана пользователем")
+                    raise
+            
+            elapsed = time.time() - start_time
+            logger.info(f"✓ Генерация завершена за {elapsed:.2f} сек")
+            
             # Декодирование
             sequence = self.processor.batch_decode(outputs.cpu())[0]
             
