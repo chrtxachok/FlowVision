@@ -1,8 +1,11 @@
 import os
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 
 from pydantic_settings import BaseSettings
+
+os.environ['TRANSFORMERS_OFFLINE'] = '1'
+os.environ['HF_HUB_OFFLINE'] = '1'
 
 # Базовая директория проекта
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -16,8 +19,8 @@ class Settings(BaseSettings):
     
     # CORS
     ALLOWED_ORIGINS: List[str] = [
-        "http://localhost:8000",
-        "https://your-crm-domain.ru"
+        # "http://localhost:8000",
+        # "https://your-crm-domain.ru"
     ]
     
     # Ограничения
@@ -47,11 +50,32 @@ class Settings(BaseSettings):
     # Список языков EasyOCR (ISO-639-1). Для РФ накладных обычно хватает ru+en.
     EASYOCR_LANGUAGES: List[str] = ["ru", "en"]
     
+    # Donut model settings
+    DONUT_ENABLED: bool = True
+    DONUT_MODEL_NAME: str = "naver-clova-ocr/donut-base"
+    # Для локальной модели укажите путь: "models/donut-base"
+    DONUT_CACHE_DIR: Path = MODEL_DIR
+    DONUT_DEVICE: str = "cpu"  # "cpu" | "cuda"
+    
+    # Task prompts для разных типов документов в Donut
+    DONUT_TASK_PROMPTS: Dict[str, str] = {
+        "waybill": "<s_waybill>",
+        "invoice": "<s_invoice>",
+        "act": "<s_act>",
+        "upd": "<s_upd>",
+    }
+    
+    # Параметры генерации для Donut
+    DONUT_MAX_LENGTH: int = 384
+    DONUT_NUM_BEAMS: int = 1
+    DONUT_TEMPERATURE: float = 1.0
+    
     # Логирование
     LOG_LEVEL: str = "INFO"
     
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"
 
 settings = Settings()

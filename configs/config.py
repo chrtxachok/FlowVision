@@ -6,11 +6,15 @@ from dotenv import load_dotenv
 # Загружаем переменные из .env
 load_dotenv()
 
+# Принудительный оффлайн режим для библиотек
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
+os.environ["HF_HUB_OFFLINE"] = "1"
+
 # Базовая директория проекта
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Пути к данным
-LOCAL_MODEL_PATH = os.getenv("LOCAL_MODEL_PATH", "./models/donut-trained")
+LOCAL_MODEL_PATH = os.getenv("LOCAL_MODEL_PATH", str(BASE_DIR / "models" / "donut-base"))
 DATA_DIR = Path(os.getenv("DATA_DIR", "./data"))
 LOGS_DIR = Path(os.getenv("LOGS_DIR", "./logs"))
 CACHE_DIR = Path(os.getenv("CACHE_DIR", "./cache"))

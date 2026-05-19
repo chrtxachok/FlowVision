@@ -1,0 +1,305 @@
+{
+  "info": {
+    "name": "FlowVision Donut API",
+    "description": "Collection for testing Donut OCR API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response is healthy\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.status).to.eql('healthy');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/health",
+          "host": ["{{BASE_URL}}"],
+          "path": ["health"]
+        }
+      }
+    },
+    {
+      "name": "Get Donut Model Info",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response contains model info\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('model');",
+              "    pm.expect(jsonData).to.have.property('device');",
+              "    pm.expect(jsonData).to.have.property('supported_document_types');",
+              "});",
+              "",
+              "pm.test(\"Store model info for later\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.environment.set('model_name', jsonData.model);",
+              "    pm.environment.set('device', jsonData.device);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/api/v1/donut/info",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "v1", "donut", "info"]
+        }
+      }
+    },
+    {
+      "name": "Extract from Invoice",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response has OCR result structure\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('status');",
+              "    pm.expect(jsonData).to.have.property('confidence');",
+              "    pm.expect(jsonData).to.have.property('extracted_data');",
+              "    pm.expect(jsonData).to.have.property('processing_time_ms');",
+              "});",
+              "",
+              "pm.test(\"Processing completed successfully\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(['success', 'partial']).to.include(jsonData.status);",
+              "});",
+              "",
+              "pm.test(\"Confidence is reasonable\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.confidence).to.be.above(0.5);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/v1/donut/extract?document_type=invoice",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "v1", "donut", "extract"],
+          "query": [
+            {
+              "key": "document_type",
+              "value": "invoice"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Extract from Waybill",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Document type is set correctly\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.document_type).to.eql('waybill');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/v1/donut/extract?document_type=waybill",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "v1", "donut", "extract"],
+          "query": [
+            {
+              "key": "document_type",
+              "value": "waybill"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Extract from Act",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/v1/donut/extract?document_type=act",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "v1", "donut", "extract"],
+          "query": [
+            {
+              "key": "document_type",
+              "value": "act"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Extract from UPD",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/v1/donut/extract?document_type=upd",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "v1", "donut", "extract"],
+          "query": [
+            {
+              "key": "document_type",
+              "value": "upd"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Parse JSON Result",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test(\"Response contains parsed data\", function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.have.property('success');",
+              "    pm.expect(jsonData).to.have.property('extracted_data');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{BASE_URL}}/api/v1/donut/parse-json?raw_output={\"invoice_number\":\"INV001\",\"date\":\"2024-05-14\"}&document_type=invoice",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "v1", "donut", "parse-json"],
+          "query": [
+            {
+              "key": "raw_output",
+              "value": "{\"invoice_number\":\"INV001\",\"date\":\"2024-05-14\"}"
+            },
+            {
+              "key": "document_type",
+              "value": "invoice"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:8000",
+      "type": "default"
+    }
+  ]
+}

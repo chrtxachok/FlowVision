@@ -8,6 +8,7 @@ from app.config import settings
 from app.services.ocr_service import OCRService
 from app.base_models.request import OCRRequest
 from app.base_models.response import OCRResponse, ErrorResponse
+from app.api.donut_routes import router as donut_router, initialize_donut
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -22,6 +23,13 @@ async def lifespan(app: FastAPI):
     ocr_service = OCRService()
     app.state.ocr_service = ocr_service
     logger.info("OCR service initialized")
+    
+    # Инициализация Donut (если включена)
+    try:
+        initialize_donut()
+    except Exception as e:
+        logger.warning(f"Donut initialization deferred: {e}")
+    
     yield
     # Очистка при завершении
     logger.info("Shutting down OCR service")
@@ -41,6 +49,9 @@ app.add_middleware(
     allow_methods=["POST", "GET"],
     allow_headers=["*"],
 )
+
+# Подключение Donut API
+app.include_router(donut_router)
 
 # Health check
 @app.get("/health")
