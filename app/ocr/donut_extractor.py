@@ -180,11 +180,11 @@ class DonutExtractor:
 
             logger.info(f"Генерирую текст для документа типа '{task_prompt}'...")
             
-            # Получаем параметры из decoder конфига (так как это VisionEncoderDecoderModel)
+            # Получаем параметры из decoder конфига (для VisionEncoderDecoderModel)
             decoder_config = self.model.config.decoder
             eos_token_id = decoder_config.eos_token_id
             pad_token_id = decoder_config.pad_token_id
-            bos_token_id = decoder_config.bos_token_id or self.processor.tokenizer.bos_token_id or 0
+            bos_token_id = decoder_config.bos_token_id or 0
             
             logger.debug(f"Token IDs - BOS: {bos_token_id}, EOS: {eos_token_id}, PAD: {pad_token_id}")
             

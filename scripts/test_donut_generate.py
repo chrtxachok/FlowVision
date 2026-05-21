@@ -56,7 +56,11 @@ try:
             input_ids=decoder_input_ids,
             encoder_hidden_states=encoder_outputs.last_hidden_state,
         )
-        print(f"    ✓ Decoder output shape: {decoder_outputs.last_hidden_state.shape}")
+        print(f"    ✓ Decoder output type: {type(decoder_outputs).__name__}")
+        if hasattr(decoder_outputs, 'logits'):
+            print(f"    Decoder logits shape: {decoder_outputs.logits.shape}")
+        else:
+            print(f"    Decoder output keys: {decoder_outputs.keys() if hasattr(decoder_outputs, 'keys') else dir(decoder_outputs)}")
         
 except Exception as e:
     print(f"  ✗ Ошибка: {type(e).__name__}: {e}")
