@@ -37,11 +37,18 @@ class Settings(BaseSettings):
     CONFIDENCE_THRESHOLD: float = 0.7
     LANGUAGE: str = "ru"
 
-    # OCR backend
-    # easyocr: проще установка/использование, модели скачиваются автоматически
-    # paddleocr: остаётся как альтернативный вариант (локальные модели + scripts/download_models.py)
-    OCR_BACKEND: str = "easyocr"  # "easyocr" | "paddleocr"
+    # OCR backend: easyocr | paddleocr | donut
+    OCR_BACKEND: str = "donut"
     OCR_DEVICE: str = "cpu"  # "cpu" | "gpu"
+
+    # Donut (дообученная модель)
+    DONUT_MODEL_PATH: Path = MODEL_DIR / "donut-trained-final"
+    DONUT_DEVICE: str = "cpu"  # cpu | cuda
+    DONUT_MAX_LENGTH: int = 512
+    DONUT_IMAGE_WIDTH: int = 1280
+    DONUT_IMAGE_HEIGHT: int = 960
+    DONUT_NUM_BEAMS: int = 4
+    DONUT_REPETITION_PENALTY: float = 1.15
 
     # EasyOCR settings
     # Список языков EasyOCR (ISO-639-1). Для РФ накладных обычно хватает ru+en.
