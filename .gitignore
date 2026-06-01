@@ -1,6 +1,6 @@
 .venv/
 
-models/
+#models/
 
 .idea
 .ipynb_checkpoints
@@ -39,17 +39,20 @@ MANIFEST
 .settings/
 
 # Исходные данные
-dataset/raw/
-dataset/annotated/
-data/train/
+# dataset/raw/
+# dataset/annotated/
+# data/train/
 
 # Обученные модели
-models/
-*.pth
-*.pt
-*.bin
-*.onnx
-*.safetensors
+# models/
+# *.pth
+# *.pt
+# *.bin
+# *.onnx
+# *.safetensors
+models/donut-base/
+models/donut-finetuned/
+models/donut-test/
 
 # логи и кэш
 logs/
