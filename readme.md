@@ -30,10 +30,18 @@ export HF_ENDPOINT=https://hf-mirror.com
 ```bash
 pip install -r requirements.txt
 ```
-зеркало для установки оставшихся зависимостей
+если с некоторыми пакетами ошибки,то:
+```bash
+pip install -r requirements.txt --trusted-host pypi.org --trusted-host files.pythonhosted.org --trusted-host download.pytorch.org
+```
+
+или использовать зеркало для установки оставшихся зависимостей
 ```bash
 pip install --default-timeout=1000 sentencepiece albumentations pytorch-lightning fastapi uvicorn python-multipart -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
+
+проверка установки
+python -c "import torch; import transformers; import fastapi; print('✅ Все библиотеки установлены успешно!')"
 
 ### Модели
 
