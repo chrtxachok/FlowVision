@@ -1,0 +1,14 @@
+# config.yaml
+donut:
+  enabled: true
+  model_name: "./models/donut-base"
+  cache_dir: "./cache/donut"
+  max_length: 1024
+  train:
+    batch_size: 1
+    num_epochs: 30
+    learning_rate: 0.00002
+    warmup_steps: 100
+    gradient_accumulation: 8
+    early_stopping_patience: 5
+    output_dir: "./models/donut-trained"
