@@ -1,0 +1,104 @@
+🎓 БЫСТРАЯ ИНСТРУКЦИЯ: Обучение Donut на Google Colab
+=====================================================
+
+ПОДГОТОВКА НА ПК (2 минуты)
+───────────────────────────
+
+1. Откройте PowerShell в проекте:
+   cd d:\GitHub\FlowVision
+
+2. Конвертируйте Label Studio разметку:
+   python scripts/prepare_data.py
+   
+   ✓ Результат: dataset/train/metadata.jsonl + 52 копии изображений
+
+3. Упакуйте для Colab:
+   python scripts/pack_colab.py
+   
+   ✓ Результат: 
+      - flowvision_colab_code.zip (47 KB)
+      - train_dataset.zip (23 MB)
+
+
+В GOOGLE COLAB (5 минут + 30-90 мин обучение)
+──────────────────────────────────────────────
+
+1. Откройте: https://colab.research.google.com
+
+2. Загрузите ноутбук:
+   Файл → Загрузить блокнот → notebooks/train_donut_colab.ipynb
+
+3. ВКЛЮЧИТЕ GPU!!!
+   Среда выполнения → Сменить среду выполнения → T4 GPU
+
+4. Запустите ячейки по порядку:
+   ✓ GPU проверка
+   ✓ Загрузить ZIP (выберите оба файла)
+   ✓ Зависимости
+   ✓ Параметры
+   ✓ Базовая модель
+   ✓ ОБУЧЕНИЕ ← Это займёт 30-90 минут
+   ✓ Тестирование
+   ✓ Скачать модель
+
+
+ПОСЛЕ COLAB (2 минуты)
+─────────────────────
+
+1. Скачайте доuntu-trained-final.zip из Colab
+
+2. Распакуйте в:
+   d:\GitHub\FlowVision\models\donut-trained-final\
+
+3. Протестируйте:
+   python scripts/test_donut.py --path "dataset/train/ТТН_0001_page-0001.jpg"
+
+4. Готово! Модель работает локально
+
+
+ПАРАМЕТРЫ ОБУЧЕНИЯ (для T4 GPU)
+───────────────────────────────
+
+Размер: 52 изображения → ~80% train (41), 20% val (10)
+Время: 30-90 минут на T4
+Эпохи: 25 (с ранней остановкой по val_loss)
+Batch size: 1 (accumulation каждые 4 шага)
+Learning rate: 2e-5
+Precision: FP16 (экономия памяти)
+
+
+ЕСЛИ ЧТО-ТО СЛОМАЛОСЬ
+────────────────────
+
+OOM (Out of Memory) → использован --freeze-encoder флаг:
+   !python train/train.py --lowmem --freeze-encoder
+
+Модель ничего не предсказывает → проверьте metadata.jsonl:
+   Должны быть поля и значения в target_sequence
+
+Сессия разорвалась → сохраните на Drive перед выключением:
+   (см. Шаг 7 в ноутбуке)
+
+
+ФАЙЛЫ ПРОЕКТА
+─────────────
+
+scripts/prepare_data.py      ← Конвертация Label Studio
+scripts/pack_colab.py         ← Упаковка для Colab
+notebooks/train_donut_colab.ipynb  ← Google Colab ноутбук
+train/train.py               ← Обучение (локально)
+app/ocr/donut_inference.py   ← Инференс модели
+dataset/raw/train1.json      ← Экспорт Label Studio
+dataset/annotated/           ← Исходные изображения (52)
+dataset/train/               ← Подготовленные данные
+
+
+
+
+проверка:
+python scripts/test_donut.py --path dataset/train/waybill_0049_page_1.jpg --model models/donut-trained --device cpu --max-length 512
+
+python scripts/pack_colab.py  
+python scripts/prepare_data.py    
+
+Для обучения модели donut  - координаты полей не нужны

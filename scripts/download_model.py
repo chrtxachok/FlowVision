@@ -1,34 +1,25 @@
+#!/usr/bin/env python3
+"""Скачивание naver-clova-ix/donut-base в ./models/donut-base"""
 import os
 import sys
+from pathlib import Path
 
-# Отключить все прокси переменные
-for key in list(os.environ.keys()):
-    if 'proxy' in key.lower():
-        del os.environ[key]
+ROOT = Path(__file__).resolve().parent.parent
+OUT = ROOT / "models" / "donut-base"
 
-os.environ['no_proxy'] = '*'
-
-# НЕ использовать зеркало - скачивать с оригинального HuggingFace
-# Убрать HF_ENDPOINT если установлен
-os.environ.pop('HF_ENDPOINT', None)
+# Зеркало HuggingFace (РФ)
+if not os.environ.get("HF_ENDPOINT"):
+    os.environ.setdefault("HF_ENDPOINT", "https://hf-mirror.com")
 
 from transformers import DonutProcessor, VisionEncoderDecoderModel
 
-print("Скачивание модели donut-base с HuggingFace...")
-model_name = "naver-clova-ix/donut-base"
-try:
-    processor = DonutProcessor.from_pretrained(model_name)
-    model = VisionEncoderDecoderModel.from_pretrained(model_name)
-    
-    # Создать директорию если её нет
-    os.makedirs("./models", exist_ok=True)
-    
-    # Сохраняем локально, чтобы больше не зависеть от сети
-    processor.save_pretrained("./models/donut-base")
-    model.save_pretrained("./models/donut-base")
-    print("✓ Модель успешно скачана в папку ./models/donut-base")
-except Exception as e:
-    print(f"✗ Ошибка загрузки: {e}")
-    print("Попробуйте установить huggingface_hub:")
-    print("  pip install huggingface_hub --upgrade")
-    sys.exit(1)
+model_name = "Akajackson/donut_rus"
+print(f"Downloading {model_name} -> {OUT}")
+OUT.mkdir(parents=True, exist_ok=True)
+
+processor = DonutProcessor.from_pretrained(model_name)
+model = VisionEncoderDecoderModel.from_pretrained(model_name)
+
+processor.save_pretrained(OUT)
+model.save_pretrained(OUT)
+print(f"Модель сохранена: {OUT}")

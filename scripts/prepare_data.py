@@ -1,129 +1,175 @@
-# scripts/prepare_data.py
+#!/usr/bin/env python3
+"""
+Конвертация экспорта Label Studio в формат Donut (metadata.jsonl + копирование изображений).
+"""
+from __future__ import annotations
+
+import argparse
 import json
-import os
 import shutil
+import sys
 from pathlib import Path
 
-def convert_to_donut_format(input_json_path, output_jsonl_path, images_src_dir, images_dst_dir):
-    """
-    Конвертирует экспорт Label Studio в формат Donut для train.py
-    
-    Args:
-        input_json_path: Путь к экспорту Label Studio (JSON)
-        output_jsonl_path: Путь для выходного metadata.jsonl
-        images_src_dir: Директория с исходными изображениями
-        images_dst_dir: Директория для копирования изображений
-    """
-    
-    # Загрузка данных из Label Studio
-    with open(input_json_path, 'r', encoding='utf-8') as f:
-        ls_data = json.load(f)
-    
-    # Создание директории для изображений
-    Path(images_dst_dir).mkdir(parents=True, exist_ok=True)
-    
-    # Статистика
-    stats = {"total": 0, "converted": 0, "errors": 0}
-    
-    with open(output_jsonl_path, 'w', encoding='utf-8') as f_out:
-        for entry in ls_data:
-            stats["total"] += 1
-            
-            try:
-                # 1. Извлекаем имя файла
-                raw_filename = entry.get('file_upload', '')
-                if not raw_filename:
-                    print(f"⚠️ Пропущено: нет file_upload")
-                    stats["errors"] += 1
-                    continue
-                
-                # Убираем хеш-префикс Label Studio
-                filename = raw_filename.split('-', 1)[-1] if '-' in raw_filename else raw_filename
-                
-                # 2. Копируем изображение в целевую директорию
-                src_path = Path(images_src_dir) / filename
-                if not src_path.exists():
-                    print(f"⚠️ Пропущено: изображение не найдено {src_path}")
-                    stats["errors"] += 1
-                    continue
-                
-                dst_path = Path(images_dst_dir) / filename
-                shutil.copy2(src_path, dst_path)
-                
-                # 3. Собираем разметку полей в словарь
-                gt_dict = {}
-                results = entry.get('annotations', [{}])[0].get('result', [])
-                
-                if not results:
-                    print(f"⚠️ Пропущено: нет аннотаций для {filename}")
-                    stats["errors"] += 1
-                    continue
-                
-                # В Label Studio разметка разбита на части:
-                # одна часть хранит имя поля (rectanglelabels), другая - текст (textarea)
-                # Они связаны общим ID внутри таска
-                temp_data = {}
-                for res in results:
-                    res_id = res.get('id')
-                    if res_id not in temp_data:
-                        temp_data[res_id] = {}
-                    
-                    if 'rectanglelabels' in res.get('value', {}):
-                        temp_data[res_id]['key'] = res['value']['rectanglelabels'][0]
-                    elif 'text' in res.get('value', {}):
-                        text_value = res['value'].get('text', [])
-                        if text_value:
-                            temp_data[res_id]['value'] = text_value[0]
-                
-                # Очищаем и формируем финальный словарь для этой накладной
-                final_parse = {}
-                for res_id, content in temp_data.items():
-                    key = content.get('key')
-                    val = content.get('value')
-                    if key and val:
-                        # Очистка текста от лишних пробелов
-                        final_parse[key] = val.strip()
-                
-                if not final_parse:
-                    print(f"⚠️ Пропущено: нет извлечённых полей для {filename}")
-                    stats["errors"] += 1
-                    continue
-                
-                # 4. Формируем строку в формате Donut
-                # ИСПРАВЛЕНО: gt_parse напрямую, не в ground_truth как строка!
-                jsonl_line = {
-                    "file_name": f"{filename}",  # Путь относительно images_dst_dir
-                    "gt_parse": final_parse  # ← ПРЯМОЙ СЛОВАРЬ, не строка!
-                }
-                
-                # Записываем как одну строку в файл
-                f_out.write(json.dumps(jsonl_line, ensure_ascii=False) + '\n')
-                stats["converted"] += 1
-                
-            except Exception as e:
-                print(f"❌ Ошибка обработки записи: {e}")
-                stats["errors"] += 1
-                continue
-    
-    # Вывод статистики
-    print(f"\n{'='*50}")
-    print(f"✅ Конвертация завершена!")
-    print(f"{'='*50}")
-    print(f"📊 Статистика:")
-    print(f"   Всего записей: {stats['total']}")
-    print(f"   Конвертировано: {stats['converted']}")
-    print(f"   Ошибок: {stats['errors']}")
-    print(f"📁 Выходной файл: {output_jsonl_path}")
-    print(f"📁 Изображения: {images_dst_dir}")
-    print(f"{'='*50}")
-    
-    return stats
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
-# Запуск
-if __name__ == "__main__":
-    convert_to_donut_format(
-        input_json_path='dataset/raw/train.json',
-        output_jsonl_path='dataset/train/metadata.jsonl',
-        images_src_dir='dataset/annotated',
-        images_dst_dir='dataset/train/images'
+from app.ocr.donut_format import gt_parse_to_sequence, parse_ground_truth_item  # noqa: E402
+
+
+def _extract_fields_from_ls_entry(entry: dict) -> tuple[dict[str, str], dict[str, list[float]]]:
+    """
+    Извлечение полей из Label Studio для новой разметки.
+    Структура: rectanglelabels (поле) + textarea (значение) связаны по id.
+    """
+    if not entry.get("annotations"):
+        return {}, {}
+    
+    results = entry["annotations"][0].get("result", [])
+    
+    # Сопоставление по id: rectanglelabels (ключи) с textarea (значения)
+    by_id: dict[str, dict] = {}
+    for res in results:
+        res_id = res.get("id")
+        res_type = res.get("type")
+        
+        if res_id not in by_id:
+            by_id[res_id] = {}
+        
+        value = res.get("value", {})
+        
+        if res_type == "rectanglelabels":
+            labels = value.get("rectanglelabels", [])
+            if labels:
+                by_id[res_id]["key"] = labels[0]
+            x = value.get("x")
+            y = value.get("y")
+            width = value.get("width")
+            height = value.get("height")
+            if x is not None and y is not None and width is not None and height is not None:
+                by_id[res_id]["bbox"] = [x, y, width, height]
+        elif res_type == "textarea":
+            text_val = value.get("text", [])
+            if text_val:
+                by_id[res_id]["value"] = text_val[0] if isinstance(text_val, list) else text_val
+    
+    # Собрать финальный результат
+    final_parse: dict[str, str] = {}
+    bboxes: dict[str, list[float]] = {}
+    for data in by_id.values():
+        key = data.get("key")
+        val = data.get("value")
+        if key and val:
+            final_parse[key] = str(val).strip()
+            if "bbox" in data:
+                bboxes[key] = data["bbox"]
+    
+    return final_parse, bboxes
+
+
+def convert_to_donut_format(
+    input_json_path: Path,
+    output_dir: Path,
+    images_source_dir: Path,
+) -> int:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_jsonl = output_dir / "metadata.jsonl"
+
+    with open(input_json_path, "r", encoding="utf-8") as f:
+        ls_data = json.load(f)
+
+    written = 0
+    skipped = 0
+    with open(output_jsonl, "w", encoding="utf-8") as f_out:
+        for entry in ls_data:
+            # Label Studio file_upload может содержать UUID префикс
+            raw_filename = entry["file_upload"]
+            # Пробуем найти файл по разным вариантам
+            possible_names = [raw_filename]
+            
+            # Если есть UUID префикс (uuid-filename), добавляем чистое имя
+            if "-" in raw_filename and len(raw_filename) > 36:  # UUID примерно 36 символов
+                clean_name = raw_filename.split("-", 1)[-1]
+                possible_names.append(clean_name)
+            
+            gt_parse, bboxes = _extract_fields_from_ls_entry(entry)
+            if not gt_parse:
+                skipped += 1
+                continue
+
+            ground_truth = json.dumps({"gt_parse": gt_parse}, ensure_ascii=False)
+            target_sequence = gt_parse_to_sequence(gt_parse, bboxes=bboxes)
+
+            # Ищем изображение
+            src_image = None
+            for name_variant in possible_names:
+                candidate = images_source_dir / name_variant
+                if candidate.exists():
+                    src_image = candidate
+                    break
+            
+            # Если не нашли - ищем по регистронезависимому поиску
+            if not src_image:
+                for name_variant in possible_names:
+                    candidates = [p for p in images_source_dir.iterdir() if p.name.lower() == name_variant.lower()]
+                    if candidates:
+                        src_image = candidates[0]
+                        break
+            
+            if not src_image:
+                print(f"  [skip] нет изображения: {raw_filename}")
+                skipped += 1
+                continue
+
+            # Используем чистое имя для выходного файла
+            clean_filename = raw_filename.split("-", 1)[-1] if "-" in raw_filename else raw_filename
+            dst_image = output_dir / clean_filename
+            
+            if not dst_image.exists() or dst_image.stat().st_mtime < src_image.stat().st_mtime:
+                shutil.copy2(src_image, dst_image)
+
+            jsonl_line = {
+                "file_name": clean_filename,
+                "ground_truth": ground_truth,
+                "target_sequence": target_sequence,
+            }
+            f_out.write(json.dumps(jsonl_line, ensure_ascii=False) + "\n")
+            written += 1
+
+    print(f"Готово: {written} записей, {skipped} пропущено")
+    return written
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Label Studio → Donut dataset")
+    parser.add_argument(
+        "--input",
+        type=Path,
+        default=ROOT / "dataset" / "raw" / "train1.json",
     )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=ROOT / "dataset" / "train",
+    )
+    parser.add_argument(
+        "--images",
+        type=Path,
+        default=ROOT / "dataset" / "annotated",
+    )
+    args = parser.parse_args()
+
+    if not args.input.exists():
+        print(f"Ошибка: не найден {args.input}")
+        return 1
+    if not args.images.exists():
+        print(f"Ошибка: не найдена папка с изображениями {args.images}")
+        return 1
+
+    count = convert_to_donut_format(args.input, args.output_dir, args.images)
+    print(f"Готово: {count} записей -> {args.output_dir / 'metadata.jsonl'}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

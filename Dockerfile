@@ -1,51 +1,51 @@
-FROM python:3.11-slim AS builder
+FROM python:3.11-slim
 
-# Установка зависимостей системы
+LABEL maintainer="FlowVision Team"
+
+# Системные зависимости ТОЛЬКО для OpenCV
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
     libgl1 \
     libsm6 \
     libxext6 \
     libxrender1 \
     libglib2.0-0 \
-    libfontconfig1 \
-    poppler-utils \
-    ca-certificates \
-    tesseract-ocr \
-    tesseract-ocr-rus \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Установка переменных окружения
+# Переменные окружения
 ENV LANG=C.UTF-8 \
     LC_ALL=C.UTF-8 \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_NO_CACHE_DIR=1
 
-# Создание рабочей директории
 WORKDIR /app
 
-# Копирование зависимостей
-# Зеркало: -i https://pypi.tuna.tsinghua.edu.cn/simple \
+# Установка зависимостей
 COPY requirements.txt .
 RUN pip install --upgrade pip && \
     pip install -r requirements.txt
 
 # Копирование кода
-COPY app ./app
-# COPY models ./models
-COPY scripts ./scripts
+COPY ./app ./app
+COPY ./static ./static
+COPY ./scripts ./scripts
 
-RUN mkdir -p /app/models
+# Создание директорий
+RUN mkdir -p /app/models /app/logs /app/data /app/cache
 
-# Создание пользователя без прав root
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+# Копирование скрипта запуска
+COPY ./scripts/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Создание пользователя
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
 USER appuser
 
-# Экспозиция порта
-EXPOSE 8080
+EXPOSE 8000
 
-# Запуск приложения
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "2"]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
 
+ENTRYPOINT ["/entrypoint.sh"]

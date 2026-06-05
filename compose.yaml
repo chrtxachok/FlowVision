@@ -9,96 +9,43 @@ version: '3.8'
 # Сервисы
 # -------------------------------------------
 services:
-  
-  # -----------------------------------------
-  # Основной сервис: FlowVision OCR API
-  # -----------------------------------------
   flowvision-ocr:
-    # Используем образ из локальной сборки
+    build: .
     image: flowvision-ocr:latest
-    
-    # Сборка из Dockerfile (если образа нет)
-    build:
-      context: .
-      dockerfile: Dockerfile
-    
-    # Имя контейнера
-    container_name: flowvision-ocr-dev
-    
-    # Перезапуск при падении
+    container_name: flowvision-ocr
     restart: unless-stopped
     
-    # Порты
     ports:
       - "${API_PORT:-8000}:8000"
     
-    # Тома (volumes) для сохранения данных
     volumes:
-      # Модель (read-only для безопасности)
+      # Модели (read-only)
       - ./models:/app/models:ro
-      
-      # Данные (read-write для записи результатов)
-      - ./data:/app/data
-      
-      # Логи (read-write)
+      # Логи
       - ./logs:/app/logs
-      
-      # Кэш (read-write)
-      - ./cache:/app/cache
-      
-      # Исходный код для горячей перезагрузки (только dev!)
-      - ./src:/app/src:ro
+      # Данные
+      - ./data:/app/data
     
-    # Переменные окружения
     environment:
-      # Пути
-      - LOCAL_MODEL_PATH=/app/models/donut-trained
-      - DATA_DIR=/app/data
-      - LOGS_DIR=/app/logs
-      - CACHE_DIR=/app/cache
-      
-      # Модель
-      - INFERENCE_DEVICE=${INFERENCE_DEVICE:-cpu}
-      - MODEL_MAX_LENGTH=1024
-      - CONFIDENCE_THRESHOLD=0.7
-      
-      # API
-      - API_HOST=0.0.0.0
       - API_PORT=8000
       - API_WORKERS=${API_WORKERS:-2}
-      
-      # Логирование
+      - API_SECRET_KEY=${API_SECRET_KEY:-dev-secret-key}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - LOG_FORMAT=%(asctime)s - %(name)s - %(levelname)s - %(message)s
-      
-      # Ограничения
       - MAX_FILE_SIZE=10485760
-      - MAX_BATCH_SIZE=10
-      - REQUEST_TIMEOUT=300
-      
-      # HuggingFace offline
-      - HF_DATASETS_OFFLINE=1
-      - TRANSFORMERS_OFFLINE=1
-      - HF_HUB_OFFLINE=1
-      
-      # Безопасность
-      - API_SECRET_KEY=${API_SECRET_KEY:-dev-secret-key-change-in-production}
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8000}
+      - OCR_DEVICE=cpu
+      - CONFIDENCE_THRESHOLD=0.7
     
-    # Зависимости (если будут другие сервисы)
-    depends_on: []
-    
-    # Ресурсы
+    # Ресурсы (imitation_model легче Donut)
     deploy:
       resources:
         limits:
-          cpus: '${DOCKER_CPU_LIMIT:-4}'
-          memory: '${DOCKER_MEMORY_LIMIT:-4G}'
+          cpus: '2'
+          memory: 2G
         reservations:
-          cpus: '${DOCKER_CPU_RESERVE:-2}'
-          memory: '${DOCKER_MEMORY_RESERVE:-2G}'
+          cpus: '1'
+          memory: 1G
     
-    # Health check
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -106,54 +53,8 @@ services:
       retries: 3
       start_period: 60s
     
-    # Сеть
-    networks:
-      - flowvision-network
-    
-    # Логи
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "3"
-  
-  # -----------------------------------------
-  # Сервис: Frontend (демо-интерфейс)
-  # -----------------------------------------
-  flowvision-frontend:
-    image: nginx:alpine
-    container_name: flowvision-frontend-dev
-    restart: unless-stopped
-    ports:
-      - "3000:80"
-    volumes:
-      - ./frontend:/usr/share/nginx/html:ro
-      - ./configs/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - flowvision-ocr
-    networks:
-      - flowvision-network
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-# -------------------------------------------
-# Сети
-# -------------------------------------------
-networks:
-  flowvision-network:
-    driver: bridge
-    name: flowvision-network
-
-# -------------------------------------------
-# Тома (для данных которые должны сохраняться)
-# -------------------------------------------
-volumes:
-  flowvision-models:
-    driver: local
-  flowvision-data:
-    driver: local
-  flowvision-logs:
-    driver: local
