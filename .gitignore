@@ -20,7 +20,7 @@ test.db
 log.txt
 Pipfile.lock
 env3.*
-env
+.env
 docs_build
 site_build
 venv
@@ -74,6 +74,5 @@ temp/
 # Оставляем для сборки:
 !Dockerfile
 !docker-compose.yml
-!.dockerignore
 
 keys
