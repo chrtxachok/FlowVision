@@ -1,20 +1,52 @@
 version: '3.8'
 
 services:
-  ocr-service:
+  flowvision-ocr:
     build: .
+    image: flowvision-ocr:latest
+    container_name: flowvision-ocr
+    restart: unless-stopped
+    
     ports:
-      - "8080:8080"
-    environment:
-      - API_KEY=${OCR_API_KEY:-dev-secret-key}
-      - DEBUG=${DEBUG:-false}
+      - "${API_PORT:-8000}:8000"
+    
     volumes:
-      - ./models:/app/models
+      # Модели (read-only)
+      - ./models:/app/models:ro
+      # Логи
       - ./logs:/app/logs
+      # Данные
+      - ./data:/app/data
+    
+    environment:
+      - API_PORT=8000
+      - API_WORKERS=${API_WORKERS:-2}
+      - API_SECRET_KEY=${API_SECRET_KEY:-dev-secret-key}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - MAX_FILE_SIZE=10485760
+      - OCR_DEVICE=cpu
+      - CONFIDENCE_THRESHOLD=0.7
+    
+    # Ресурсы (imitation_model легче Donut)
     deploy:
       resources:
         limits:
+          cpus: '2'
           memory: 2G
         reservations:
+          cpus: '1'
           memory: 1G
-    restart: unless-stopped
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

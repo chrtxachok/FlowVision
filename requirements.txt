@@ -1,44 +1,20 @@
-# FastAPI и веб-фреймворк
-fastapi
-uvicorn[standard]
-pydantic
-pydantic-settings
-python-multipart
-python-dotenv
+# Web
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+pydantic==2.6.1
+pydantic-settings==2.1.0
+python-multipart==0.0.9
+python-dotenv==1.0.1
+loguru==0.7.2
 
-# OCR и обработка изображений
-torch
-torchvision
-pytorch-lightning
-opencv-python
-pillow
-numpy
-albumentations
-transformers
-datasets
-seqeval
-sentencepiece
-parse
-timm
+# OCR и ML (только для imitation_model)
+easyocr==1.7.1
+scikit-learn==1.4.0
+opencv-python-headless==4.9.0.80
+pillow==10.2.0
+numpy==1.26.4
 
-# Метрики и обучение
-accelerate
-evaluate
-
-# Обработка PDF
-#pdf2image
-#PyMuPDF
-
-# Валидация и утилиты
-python-multipart
-
-# Логирование
-loguru
-
-# dev:
-pytest
-pytest-asyncio
-#httpx==0.26.0
-black==23.12.1
-flake8==7.0.0
-#mypy==1.8.0
+# Тестирование
+pytest==8.0.0
+pytest-asyncio==0.23.5
+httpx==0.27.0
