@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     
     # CORS
-    ALLOWED_ORIGINS: List[str] = ["*"]
+    ALLOWED_ORIGINS: str = "*"
     
     # Ограничения
     MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10 MB
