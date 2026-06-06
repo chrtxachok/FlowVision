@@ -26,11 +26,20 @@ class Settings(BaseSettings):
     
     # Пути к моделям
     MODEL_DIR: Path = BASE_DIR / "models"
-    
+
+    # ---- logika.py (WaybillExtractor) ----
+    # Директория, где лежат обученные .pkl модели
+    # (field_classifier.pkl, scaler.pkl, field_coords.pkl).
+    # По умолчанию — корень проекта, как в test_gui.py.
+    LOGIKA_MODEL_DIR: Path = BASE_DIR
+    # JSON-разметка Label Studio для обучения (если .pkl ещё не созданы)
+    LABEL_STUDIO_JSON: Path = BASE_DIR / "project-1-at-2026-04-18-05-40-eb2e8e7a.json"
+
     # imitation_model файлы (обученные через train_model_from_json)
-    LEGACY_CLASSIFIER_PATH: Path = MODEL_DIR / "field_classifier.pkl"
-    LEGACY_SCALER_PATH: Path = MODEL_DIR / "scaler.pkl"
-    LEGACY_COORDS_PATH: Path = MODEL_DIR / "field_coords.pkl"
+    LEGACY_CLASSIFIER_PATH: Path = BASE_DIR / "field_classifier.pkl"
+    LEGACY_SCALER_PATH: Path = BASE_DIR / "scaler.pkl"
+    LEGACY_COORDS_PATH: Path = BASE_DIR / "field_coords.pkl"
+
     
     # Настройки обработки
     CONFIDENCE_THRESHOLD: float = 0.7

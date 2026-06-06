@@ -21,18 +21,36 @@
                 <h2>Загрузить документ</h2>
                 
                 <form id="uploadForm" class="upload-form">
-                    <!-- Drag-and-drop зона -->
+                    <!-- Страница 1 -->
                     <div id="dropZone" class="drop-zone">
                         <div class="drop-zone-content">
                             <div class="drop-icon">📤</div>
-                            <p>Перетащите файл сюда</p>
-                            <p class="small">или нажмите для выбора</p>
+                            <p>Страница 1 (или единственная)</p>
+                            <p class="small">перетащите файл или нажмите для выбора</p>
+                            <p id="fileName1" class="small file-chosen"></p>
                         </div>
                         <input 
                             type="file" 
                             id="fileInput" 
                             name="file" 
-                            accept=".jpg,.jpeg,.png,.pdf"
+                            accept=".jpg,.jpeg,.png,.bmp,.tiff"
+                            hidden
+                        >
+                    </div>
+
+                    <!-- Страница 2 (опционально) -->
+                    <div id="dropZone2" class="drop-zone">
+                        <div class="drop-zone-content">
+                            <div class="drop-icon">📄</div>
+                            <p>Страница 2 (опционально)</p>
+                            <p class="small">перетащите файл или нажмите для выбора</p>
+                            <p id="fileName2" class="small file-chosen"></p>
+                        </div>
+                        <input 
+                            type="file" 
+                            id="fileInput2" 
+                            name="file2" 
+                            accept=".jpg,.jpeg,.png,.bmp,.tiff"
                             hidden
                         >
                     </div>
@@ -42,14 +60,12 @@
                         <div class="form-group">
                             <label for="documentType">Тип документа:</label>
                             <select id="documentType" name="document_type">
-                                <option value="waybill">Товарная накладная (ТТН)</option>
-                                <option value="invoice">Счет-фактура</option>
-                                <option value="act">Акт выполненных работ</option>
-                                <option value="other">Другой документ</option>
+                                <option value="waybill">Транспортная накладная (ТН)</option>
                             </select>
                         </div>
 
                         <div class="form-group">
+
                             <label for="apiKey">API ключ:</label>
                             <input 
                                 type="password" 
@@ -96,23 +112,15 @@
                 </div>
 
                 <!-- Извлеченные данные -->
-                <div class="results-grid">
-                    <!-- Левая колонка -->
+                <div class="results-grid single">
                     <div class="results-column">
-                        <h3>📊 Извлеченные данные</h3>
+                        <h3>📊 Извлеченные поля накладной</h3>
                         <div id="extractedData" class="extracted-data">
                             <!-- Будет заполнено JavaScript -->
                         </div>
                     </div>
-
-                    <!-- Правая колонка -->
-                    <div class="results-column">
-                        <h3>📝 Сырой текст</h3>
-                        <div id="rawText" class="raw-text">
-                            <!-- Будет заполнено JavaScript -->
-                        </div>
-                    </div>
                 </div>
+
 
                 <!-- JSON результат -->
                 <div class="json-section">

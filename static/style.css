@@ -475,3 +475,31 @@ body {
         padding: 30px 15px;
     }
 }
+
+/* Вторая зона загрузки + выбранный файл */
+#dropZone2 {
+    margin-top: 12px;
+    border-style: dashed;
+    opacity: 0.95;
+}
+
+.drop-zone-content .file-chosen {
+    margin-top: 8px;
+    color: var(--success-color);
+    font-weight: 600;
+    word-break: break-all;
+}
+
+/* Сетка результатов в одну колонку */
+.results-grid.single {
+    grid-template-columns: 1fr;
+}
+
+/* Код поля рядом с названием */
+.data-item strong small {
+    color: var(--text-secondary);
+    font-weight: 400;
+    font-size: 0.8rem;
+}
+
+

@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxrender1 \
     libglib2.0-0 \
     curl \
+    dos2unix \
     && rm -rf /var/lib/apt/lists/*
 
 # Переменные окружения
@@ -30,12 +31,22 @@ RUN pip install --upgrade pip && \
 COPY ./app ./app
 COPY ./static ./static
 COPY ./scripts ./scripts
+COPY ./logika.py ./logika.py
+COPY ./project-1-at-2026-04-18-05-40-eb2e8e7a.json ./project-1-at-2026-04-18-05-40-eb2e8e7a.json
+# Предобученные модели для logika.WaybillExtractor (как в test_gui.py)
+COPY ./field_classifier.pkl ./field_classifier.pkl
+COPY ./scaler.pkl ./scaler.pkl
+COPY ./field_coords.pkl ./field_coords.pkl
+
+
+
 
 # Создание директорий
 RUN mkdir -p /app/models /app/logs /app/data /app/cache
 
 # Копирование скрипта запуска
 COPY ./scripts/entrypoint.sh /entrypoint.sh
+RUN dos2unix /entrypoint.sh 
 RUN chmod +x /entrypoint.sh
 
 # Создание пользователя

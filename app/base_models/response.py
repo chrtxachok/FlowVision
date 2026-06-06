@@ -37,15 +37,21 @@ class InvoiceData(BaseModel):
     total: FieldValue = Field(default_factory=FieldValue)
 
 class OCRResponse(BaseModel):
-    """Ответ сервиса распознавания"""
+    """
+    Ответ сервиса распознавания.
+
+    Формат полностью соответствует результату logika.WaybillExtractor.extract():
+    словарь извлечённых полей (F001, F002, ...) находится в extracted_data.
+    """
     status: ProcessingStatus
     document_type: str
-    confidence: float = Field(ge=0.0, le=1.0)
     processing_time_ms: int
+    pages_processed: int = 1
     extracted_data: Dict[str, Any]
     raw_text: Optional[str] = None
     warnings: List[str] = Field(default_factory=list)
     metadata: Dict[str, Any] = Field(default_factory=dict)
+
 
 class ErrorResponse(BaseModel):
     """Ответ об ошибке"""
