@@ -20,4 +20,4 @@ echo "📡 API доступен на http://${API_HOST:-0.0.0.0}:${API_PORT:-800
 echo "🔍 Health check: http://localhost:${API_PORT:-8000}/health"
 
 # Запуск основного приложения
-exec "$@"
+exec exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
