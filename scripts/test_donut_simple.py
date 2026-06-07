@@ -5,6 +5,7 @@
 import os
 import torch
 
+
 print("Информация о системе:")
 print(f"  PyTorch version: {torch.__version__}")
 print(f"  CUDA available: {torch.cuda.is_available()}")
