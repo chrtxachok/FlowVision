@@ -21,3 +21,4 @@ def calculate_metrics(preds, gts):
     recall = tp / (tp + fn + 1e-9)
     f1 = 2 * (precision * recall) / (precision + recall + 1e-9)
     return precision, recall, f1
+    

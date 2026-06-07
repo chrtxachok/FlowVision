@@ -4,6 +4,7 @@ import random
 from pathlib import Path
 from sklearn.model_selection import train_test_split
 
+
 def split_dataset(input_dir: str, output_base: str, train_ratio: float = 0.8):
     """Разделяет датасет Donut на train/val/test."""
     

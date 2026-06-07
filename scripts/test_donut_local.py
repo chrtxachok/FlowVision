@@ -6,6 +6,7 @@ import sys
 import time
 import os
 
+
 # Отключаем прокси
 os.environ['no_proxy'] = '*'
 os.environ.pop('HTTP_PROXY', None)
